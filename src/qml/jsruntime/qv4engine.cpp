@@ -252,8 +252,10 @@ ExecutionEngine::ExecutionEngine(EvalISelFactory *factory)
     // set up stack limits
     jsStackLimit = jsStackBase + JSStackLimit/sizeof(Value);
     cStackLimit = getStackLimit();
+#ifndef Q_OS_NACL_EMSCRIPTEN
     if (!recheckCStackLimits())
         qFatal("Fatal: Not enough stack space available for QML. Please increase the process stack size to more than %d KBytes.", MinimumStackSize);
+#endif
 
     identifierTable = new IdentifierTable(this);
 

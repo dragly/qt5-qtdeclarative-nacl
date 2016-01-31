@@ -530,7 +530,7 @@ bool QQmlImports::resolveType(const QHashedStringRef &type,
     }
     if (type_return) {
         if (d->resolveType(type,vmaj,vmin,type_return, errors)) {
-            if (qmlImportTrace()) {
+            if (true || qmlImportTrace()) {
 #define RESOLVE_TYPE_DEBUG qDebug().nospace() << "QQmlImports(" << qPrintable(baseUrl().toString()) \
                                               << ')' << "::resolveType: " << type.toString() << " => "
 
@@ -897,7 +897,7 @@ bool QQmlImportsPrivate::importExtension(const QString &qmldirFilePath,
 #if !defined(QT_NO_LIBRARY)
     Q_ASSERT(qmldir);
 
-    if (qmlImportTrace())
+    if (true || qmlImportTrace())
         qDebug().nospace() << "QQmlImports(" << qPrintable(base) << ")::importExtension: "
                            << "loaded " << qmldirFilePath;
 
@@ -960,15 +960,22 @@ bool QQmlImportsPrivate::importExtension(const QString &qmldirFilePath,
             // has several plugins, they must all have the same version. Start by populating pluginPairs
             // with relevant plugins to cut the list short early on:
             QVector<StaticPluginPair> pluginPairs;
+            qDebug() << "Look for statics";
             if (!populatePluginPairVector(pluginPairs, uri, qmldirFilePath, errors))
                 return false;
+                
+            qDebug() << "Looking for static plugins";
 
             const QString basePath = QFileInfo(qmldirPath).absoluteFilePath();
             for (int version = QQmlImports::FullyVersioned; version <= QQmlImports::Unversioned && staticPluginsFound == 0; ++version) {
+                qDebug() << "Version:" << version;
                 QString versionUri = uri + QQmlImports::versionString(vmaj, vmin, static_cast<QQmlImports::ImportVersion>(version));
+                qDebug() << "VersionURI:" << versionUri;
 
                 foreach (const StaticPluginPair &pair, pluginPairs) {
+                    qDebug() << "Static plugin pair";
                     foreach (const QJsonValue &metaTagUri, pair.second) {
+                        qDebug() << "URI" << metaTagUri;
                         if (versionUri == metaTagUri.toString()) {
                             staticPluginsFound++;
                             QObject *instance = pair.first.instance();
@@ -1205,13 +1212,14 @@ bool QQmlImportsPrivate::validateQmldirVersion(const QQmlTypeLoader::QmldirConte
             highest_min = qMax(highest_min, sit->minorVersion);
         }
     }
-
+#ifndef Q_OS_NACL
     if (lowest_min > vmin || highest_min < vmin) {
         QQmlError error;
         error.setDescription(QQmlImportDatabase::tr("module \"%1\" version %2.%3 is not installed").arg(uri).arg(vmaj).arg(vmin));
         errors->prepend(error);
         return false;
     }
+#endif
 
     return true;
 }
@@ -1459,7 +1467,7 @@ bool QQmlImports::addImplicitImport(QQmlImportDatabase *importDb, QList<QQmlErro
 {
     Q_ASSERT(errors);
 
-    if (qmlImportTrace())
+    if (true || qmlImportTrace())
         qDebug().nospace() << "QQmlImports(" << qPrintable(baseUrl().toString())
                            << ")::addImplicitImport";
 
@@ -1495,7 +1503,7 @@ bool QQmlImports::addFileImport(QQmlImportDatabase *importDb,
     Q_ASSERT(importDb);
     Q_ASSERT(errors);
 
-    if (qmlImportTrace())
+    if (true || qmlImportTrace())
         qDebug().nospace() << "QQmlImports(" << qPrintable(baseUrl().toString()) << ')' << "::addFileImport: "
                            << uri << ' ' << vmaj << '.' << vmin << " as " << prefix;
 
@@ -1509,7 +1517,7 @@ bool QQmlImports::addLibraryImport(QQmlImportDatabase *importDb,
     Q_ASSERT(importDb);
     Q_ASSERT(errors);
 
-    if (qmlImportTrace())
+    if (true || qmlImportTrace())
         qDebug().nospace() << "QQmlImports(" << qPrintable(baseUrl().toString()) << ')' << "::addLibraryImport: "
                            << uri << ' ' << vmaj << '.' << vmin << " as " << prefix;
 
@@ -1523,7 +1531,7 @@ bool QQmlImports::updateQmldirContent(QQmlImportDatabase *importDb,
     Q_ASSERT(importDb);
     Q_ASSERT(errors);
 
-    if (qmlImportTrace())
+    if (true || qmlImportTrace())
         qDebug().nospace() << "QQmlImports(" << qPrintable(baseUrl().toString()) << ')' << "::updateQmldirContent: "
                            << uri << " to " << qmldirUrl << " as " << prefix;
 
@@ -1564,8 +1572,11 @@ QQmlImportDatabase::QQmlImportDatabase(QQmlEngine *e)
     filePluginPath << QLatin1String(".");
 
     // Search order is applicationDirPath(), $QML2_IMPORT_PATH, QLibraryInfo::Qml2ImportsPath
-
+#ifdef Q_OS_NACL
+    QString installImportsPath = "qml";
+#else
     QString installImportsPath =  QLibraryInfo::location(QLibraryInfo::Qml2ImportsPath);
+#endif
     addImportPath(installImportsPath);
 
     // env import paths
@@ -1642,7 +1653,7 @@ QString QQmlImportDatabase::resolvePlugin(QQmlTypeLoader *typeLoader,
         }
     }
 
-    if (qmlImportTrace())
+    if (true || qmlImportTrace())
         qDebug() << "QQmlImportDatabase::resolvePlugin: Could not resolve plugin" << baseName
                  << "in" << qmldirPath;
 
@@ -1688,6 +1699,8 @@ QString QQmlImportDatabase::resolvePlugin(QQmlTypeLoader *typeLoader,
                          << QLatin1String(".so")
                          << QLatin1String(".bundle"),
                          QLatin1String("lib"));
+#elif defined(Q_OS_NACL_EMSCRIPTEN)
+    return resolvePlugin(typeLoader, qmldirPath, qmldirPluginPath, baseName, QStringList() << QLatin1String(".so") << QLatin1String("js"), QLatin1String("lib"));
 # else  // Unix
     return resolvePlugin(typeLoader, qmldirPath, qmldirPluginPath, baseName, QStringList() << QLatin1String(".so"), QLatin1String("lib"));
 #endif
@@ -1706,7 +1719,7 @@ QStringList QQmlImportDatabase::pluginPathList() const
 */
 void QQmlImportDatabase::setPluginPathList(const QStringList &paths)
 {
-    if (qmlImportTrace())
+    if (true || qmlImportTrace())
         qDebug().nospace() << "QQmlImportDatabase::setPluginPathList: " << paths;
 
     filePluginPath = paths;
@@ -1717,7 +1730,7 @@ void QQmlImportDatabase::setPluginPathList(const QStringList &paths)
 */
 void QQmlImportDatabase::addPluginPath(const QString& path)
 {
-    if (qmlImportTrace())
+    if (true || qmlImportTrace())
         qDebug().nospace() << "QQmlImportDatabase::addPluginPath: " << path;
 
     QUrl url = QUrl(path);
@@ -1735,7 +1748,7 @@ void QQmlImportDatabase::addPluginPath(const QString& path)
 */
 void QQmlImportDatabase::addImportPath(const QString& path)
 {
-    if (qmlImportTrace())
+    if (true || qmlImportTrace())
         qDebug().nospace() << "QQmlImportDatabase::addImportPath: " << path;
 
     if (path.isEmpty())
@@ -1788,7 +1801,7 @@ QStringList QQmlImportDatabase::importPathList(PathType type) const
 */
 void QQmlImportDatabase::setImportPathList(const QStringList &paths)
 {
-    if (qmlImportTrace())
+    if (true || qmlImportTrace())
         qDebug().nospace() << "QQmlImportDatabase::setImportPathList: " << paths;
 
     fileImportPath = paths;
@@ -1803,7 +1816,7 @@ void QQmlImportDatabase::setImportPathList(const QStringList &paths)
 bool QQmlImportDatabase::registerPluginTypes(QObject *instance, const QString &basePath,
                                       const QString &uri, const QString &typeNamespace, int vmaj, QList<QQmlError> *errors)
 {
-    if (qmlImportTrace())
+    if (true || qmlImportTrace())
         qDebug().nospace() << "QQmlImportDatabase::registerPluginTypes: " << uri << " from " << basePath;
 
     QQmlTypesExtensionInterface *iface = qobject_cast<QQmlTypesExtensionInterface *>(instance);
@@ -1939,6 +1952,7 @@ bool QQmlImportDatabase::importStaticPlugin(QObject *instance, const QString &ba
 bool QQmlImportDatabase::importDynamicPlugin(const QString &filePath, const QString &uri,
                                              const QString &typeNamespace, int vmaj, QList<QQmlError> *errors)
 {
+    qDebug() << "Importing " << filePath << uri << typeNamespace << vmaj;
 #ifndef QT_NO_LIBRARY
     QFileInfo fileInfo(filePath);
     const QString absoluteFilePath = fileInfo.absoluteFilePath();
@@ -1966,9 +1980,11 @@ bool QQmlImportDatabase::importDynamicPlugin(const QString &filePath, const QStr
 
         QPluginLoader* loader = 0;
         if (!typesRegistered) {
+            qDebug() << "Loader is loading!";
             loader = new QPluginLoader(absoluteFilePath);
 
             if (!loader->load()) {
+                qDebug() << "Could not load...";
                 if (errors) {
                     QQmlError error;
                     error.setDescription(loader->errorString());

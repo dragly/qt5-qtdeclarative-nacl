@@ -902,6 +902,8 @@ void Renderer::unmap(Buffer *buffer, bool isIndexBuf)
     if (buffer->id == 0)
         glGenBuffers(1, &buffer->id);
     GLenum target = isIndexBuf ? GL_ELEMENT_ARRAY_BUFFER : GL_ARRAY_BUFFER;
+    
+    qDebug() << "Unmap" << buffer->id;
     glBindBuffer(target, buffer->id);
     glBufferData(target, buffer->size, buffer->data, m_bufferStrategy);
 
@@ -2119,6 +2121,8 @@ void Renderer::updateClip(const QSGClipNode *clipList, const Batch *batch)
         // updateClip sets another program, so force-reactivate our own
         if (m_currentShader)
             setActiveShader(0, 0);
+            
+      qDebug() << "Updateclip";  
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
         if (batch->isOpaque)
@@ -2227,7 +2231,8 @@ void Renderer::renderMergedBatch(const Batch *batch)
 
     // updateClip() uses m_current_projection_matrix.
     updateClip(gn->clipList(), batch);
-
+    
+    qDebug() << "renderMergedBatch" << batch->vbo.id;
     glBindBuffer(GL_ARRAY_BUFFER, batch->vbo.id);
 
     char *indexBase = 0;
@@ -2238,8 +2243,10 @@ void Renderer::renderMergedBatch(const Batch *batch)
 #endif
     if (m_context->hasBrokenIndexBufferObjects()) {
         indexBase = indexBuf->data;
+        qDebug() << "Has broken index buffer objects AA " << indexBuf->id;
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     } else {
+        qDebug() << "Has broken index buffer objects BB " << indexBuf->id;
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuf->id);
     }
 
@@ -2324,7 +2331,8 @@ void Renderer::renderUnmergedBatch(const Batch *batch)
 
     m_current_projection_matrix = projectionMatrix();
     updateClip(gn->clipList(), batch);
-
+    
+    qDebug() << "Render unmerged batch " << batch->vbo.id;
     glBindBuffer(GL_ARRAY_BUFFER, batch->vbo.id);
     char *indexBase = 0;
 #ifdef QSG_SEPARATE_INDEX_BUFFER
@@ -2335,8 +2343,10 @@ void Renderer::renderUnmergedBatch(const Batch *batch)
     if (batch->indexCount) {
         if (m_context->hasBrokenIndexBufferObjects()) {
             indexBase = indexBuf->data;
+            qDebug() << "Render unmerged batch has broken AA" << indexBuf->id;
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
         } else {
+            qDebug() << "Render unmerged batch has broken BB" << indexBuf->id;
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuf->id);
         }
     }
@@ -2513,6 +2523,7 @@ void Renderer::renderBatches()
     if (m_currentShader)
         setActiveShader(0, 0);
     updateStencilClip(0);
+    qDebug() << "Zero in some func";
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     glDepthMask(true);
@@ -2775,6 +2786,7 @@ void Renderer::renderRenderNode(Batch *batch)
     glDisable(GL_STENCIL_TEST);
     glDisable(GL_SCISSOR_TEST);
     glDisable(GL_DEPTH_TEST);
+    qDebug() << "Render render node";
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
@@ -2852,7 +2864,8 @@ void Renderer::visualizeBatch(Batch *b)
     QSGGeometryNode *gn = b->first->node;
     QSGGeometry *g = gn->geometry();
     const QSGGeometry::Attribute &a = g->attributes()[b->positionAttribute];
-
+    
+    qDebug() << "Visualize batch" << b->vbo.id;
     glBindBuffer(GL_ARRAY_BUFFER, b->vbo.id);
 
     QMatrix4x4 matrix(m_current_projection_matrix);

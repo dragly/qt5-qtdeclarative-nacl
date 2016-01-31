@@ -147,8 +147,8 @@ void QQmlThreadPrivate::mainEvent()
     lock();
 
     m_mainProcessing = true;
-
-    while (!mainList.isEmpty() || mainSync) {
+    
+    while ((!mainList.isEmpty() || mainSync)) {
         bool isSync = mainSync != 0;
         QQmlThread::Message *message = isSync?mainSync:mainList.takeFirst();
         unlock();
@@ -228,6 +228,7 @@ void QQmlThread::shutdown()
     d->lock();
     Q_ASSERT(!d->m_shutdown);
     d->m_shutdown = true;
+    
     if (d->threadList.isEmpty() && d->m_threadProcessing == false) {
         if (QCoreApplication::closingDown()) {
             d->quit();
@@ -297,6 +298,10 @@ void QQmlThread::shutdownThread()
 
 void QQmlThread::internalCallMethodInThread(Message *message)
 {
+#ifdef Q_OS_NACL_EMSCRIPTEN
+    message->call(this);
+    return;
+#endif
     Q_ASSERT(!isThisThread());
     d->lock();
     Q_ASSERT(d->m_mainThreadWaiting == false);
@@ -307,6 +312,8 @@ void QQmlThread::internalCallMethodInThread(Message *message)
         d->triggerThreadEvent();
 
     d->m_mainThreadWaiting = true;
+    
+    int count = 0;
 
     do {
         if (d->mainSync) {
@@ -320,7 +327,8 @@ void QQmlThread::internalCallMethodInThread(Message *message)
         } else {
             d->wait();
         }
-    } while (d->mainSync || !d->threadList.isEmpty());
+        count += 1;
+    } while ((d->mainSync || !d->threadList.isEmpty()) && count < 100);
 
     d->m_mainThreadWaiting = false;
     d->unlock();
@@ -328,6 +336,10 @@ void QQmlThread::internalCallMethodInThread(Message *message)
 
 void QQmlThread::internalCallMethodInMain(Message *message)
 {
+#ifdef Q_OS_NACL_EMSCRIPTEN
+    message->call(this);
+    return;
+#endif
     Q_ASSERT(isThisThread());
 
     d->lock();
@@ -342,14 +354,17 @@ void QQmlThread::internalCallMethodInMain(Message *message)
     } else {
         d->triggerMainEvent();
     }
+    
+    int count = 0;
 
-    while (d->mainSync) {
+    while (d->mainSync && count < 100) {
         if (d->m_shutdown) {
             delete d->mainSync;
             d->mainSync = 0;
             break;
         }
         d->wait();
+        count += 1;
     }
 
     d->unlock();

@@ -3,6 +3,8 @@ TARGET  = qtquick2plugin
 TARGETPATH = QtQuick.2
 IMPORT_VERSION = 2.6
 
+CONFIG += plugin static staticlib
+
 SOURCES += \
     plugin.cpp
 

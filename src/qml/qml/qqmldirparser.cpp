@@ -100,6 +100,9 @@ bool QQmlDirParser::parse(const QString &source)
     _plugins.clear();
     _components.clear();
     _scripts.clear();
+#ifdef Q_OS_NACL
+    _typeNamespace.clear();
+#endif
     _designerSupported = false;
 
     quint16 lineNumber = 0;
