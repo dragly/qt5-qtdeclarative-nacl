@@ -903,7 +903,6 @@ void Renderer::unmap(Buffer *buffer, bool isIndexBuf)
         glGenBuffers(1, &buffer->id);
     GLenum target = isIndexBuf ? GL_ELEMENT_ARRAY_BUFFER : GL_ARRAY_BUFFER;
     
-    qDebug() << "Unmap" << buffer->id;
     glBindBuffer(target, buffer->id);
     glBufferData(target, buffer->size, buffer->data, m_bufferStrategy);
 
@@ -2232,7 +2231,6 @@ void Renderer::renderMergedBatch(const Batch *batch)
     // updateClip() uses m_current_projection_matrix.
     updateClip(gn->clipList(), batch);
     
-    qDebug() << "renderMergedBatch" << batch->vbo.id;
     glBindBuffer(GL_ARRAY_BUFFER, batch->vbo.id);
 
     char *indexBase = 0;
@@ -2243,13 +2241,9 @@ void Renderer::renderMergedBatch(const Batch *batch)
 #endif
     if (m_context->hasBrokenIndexBufferObjects()) {
         indexBase = indexBuf->data;
-        qDebug() << "Has broken index buffer objects AA " << indexBuf->id;
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    } else {
-        qDebug() << "Has broken index buffer objects BB " << indexBuf->id;
+    } else
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuf->id);
-    }
-
 
     QSGMaterial *material = gn->activeMaterial();
     ShaderManager::Shader *sms = m_useDepthBuffer ? m_shaderManager->prepareMaterial(material) : m_shaderManager->prepareMaterialNoRewrite(material);
@@ -2523,7 +2517,6 @@ void Renderer::renderBatches()
     if (m_currentShader)
         setActiveShader(0, 0);
     updateStencilClip(0);
-    qDebug() << "Zero in some func";
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     glDepthMask(true);
