@@ -147,7 +147,7 @@ void QQmlThreadPrivate::mainEvent()
     lock();
 
     m_mainProcessing = true;
-    
+
     while ((!mainList.isEmpty() || mainSync)) {
         bool isSync = mainSync != 0;
         QQmlThread::Message *message = isSync?mainSync:mainList.takeFirst();
@@ -372,6 +372,10 @@ void QQmlThread::internalCallMethodInMain(Message *message)
 
 void QQmlThread::internalPostMethodToThread(Message *message)
 {
+#ifdef Q_OS_NACL_EMSCRIPTEN
+    message->call(this);
+    return;
+#endif
     Q_ASSERT(!isThisThread());
     d->lock();
     bool wasEmpty = d->threadList.isEmpty();
@@ -383,6 +387,10 @@ void QQmlThread::internalPostMethodToThread(Message *message)
 
 void QQmlThread::internalPostMethodToMain(Message *message)
 {
+#ifdef Q_OS_NACL_EMSCRIPTEN
+    message->call(this);
+    return;
+#endif
     Q_ASSERT(isThisThread());
     d->lock();
     bool wasEmpty = d->mainList.isEmpty();
