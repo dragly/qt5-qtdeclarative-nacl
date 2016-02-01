@@ -113,6 +113,14 @@ QT_WARNING_DISABLE_MSVC(4172) // MSVC 2015: warning C4172: returning address of 
 quintptr getStackLimit()
 {
     quintptr stackLimit;
+#ifdef Q_OS_NACL_EMSCRIPTEN
+    int dummy;
+    // this is inexact, as part of the stack is used when being called here,
+    // but let's simply default to 1MB from where the stack is right now
+    stackLimit = reinterpret_cast<qintptr>(&dummy) - 1024*1024;
+    return stackLimit + MinimumStackSize*1024;
+#endif
+
 #if USE(PTHREADS) && !OS(QNX)
 #  if OS(DARWIN)
     pthread_t thread_self = pthread_self();
@@ -252,10 +260,8 @@ ExecutionEngine::ExecutionEngine(EvalISelFactory *factory)
     // set up stack limits
     jsStackLimit = jsStackBase + JSStackLimit/sizeof(Value);
     cStackLimit = getStackLimit();
-#ifndef Q_OS_NACL_EMSCRIPTEN
     if (!recheckCStackLimits())
         qFatal("Fatal: Not enough stack space available for QML. Please increase the process stack size to more than %d KBytes.", MinimumStackSize);
-#endif
 
     identifierTable = new IdentifierTable(this);
 
