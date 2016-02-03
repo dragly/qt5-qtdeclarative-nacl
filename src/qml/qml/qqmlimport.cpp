@@ -35,6 +35,8 @@
 
 #include <QtCore/qdebug.h>
 #include <QtCore/qdir.h>
+#include <QtCore/qendian.h>
+#include <QtCore/qjsondocument.h>
 #include <QtQml/qqmlfile.h>
 #include <QtCore/qfileinfo.h>
 #include <QtCore/qpluginloader.h>
@@ -837,6 +839,27 @@ QQmlImportNamespace *QQmlImportsPrivate::findQualifiedNamespace(const QHashedStr
 
 
 #ifndef QT_NO_LIBRARY
+
+
+#include <iostream>
+#include <iomanip>
+
+struct HexCharStruct
+{
+  unsigned char c;
+  HexCharStruct(unsigned char _c) : c(_c) { }
+};
+
+inline std::ostream& operator<<(std::ostream& o, const HexCharStruct& hs)
+{
+  return (o << std::hex << (int)hs.c);
+}
+
+inline HexCharStruct hex(unsigned char _c)
+{
+  return HexCharStruct(_c);
+}
+
 /*!
     Get all static plugins that are QML plugins and has a meta data URI that begins with \a uri.
     Note that if e.g uri == "a", and different plugins have meta data "a", "a.2.1", "a.b.c", all
@@ -860,6 +883,11 @@ bool QQmlImportsPrivate::populatePluginPairVector(QVector<StaticPluginPair> &res
         if (QQmlExtensionPlugin *instance = qobject_cast<QQmlExtensionPlugin *>(plugin.instance())) {
             const QJsonArray metaTagsUriList = plugin.metaData().value(QStringLiteral("uri")).toArray();
             if (metaTagsUriList.isEmpty()) {
+#ifdef Q_OS_NACL_EMSCRIPTEN
+      qWarning() << QQmlImportDatabase::tr("static plugin for module \"%1\" with name \"%2\" has no metadata URI")
+                    .arg(uri).arg(QString::fromUtf8(instance->metaObject()->className()));
+      qWarning() << "Metadata was" << plugin.metaData();
+#else
                 if (errors) {
                     QQmlError error;
                     error.setDescription(QQmlImportDatabase::tr("static plugin for module \"%1\" with name \"%2\" has no metadata URI")
@@ -868,6 +896,7 @@ bool QQmlImportsPrivate::populatePluginPairVector(QVector<StaticPluginPair> &res
                     errors->prepend(error);
                 }
                 return false;
+#endif
             }
             // A plugin can be set up to handle multiple URIs, so go through the list:
             foreach (const QJsonValue &metaTagUri, metaTagsUriList) {
@@ -1572,7 +1601,9 @@ QQmlImportDatabase::QQmlImportDatabase(QQmlEngine *e)
     filePluginPath << QLatin1String(".");
 
     // Search order is applicationDirPath(), $QML2_IMPORT_PATH, QLibraryInfo::Qml2ImportsPath
-#ifdef Q_OS_NACL
+#if defined(Q_OS_NACL_EMSCRIPTEN)
+    QString installImportsPath = "qt_qml";
+#elif defined(Q_OS_NACL_EMSCRIPTEN)
     QString installImportsPath = "qml";
 #else
     QString installImportsPath =  QLibraryInfo::location(QLibraryInfo::Qml2ImportsPath);

@@ -188,6 +188,7 @@ QV4::ReturnedValue QQmlJavaScriptExpression::evaluate(QV4::CallData *callData, b
 
     result = f->as<QV4::FunctionObject>()->call(callData);
     if (scope.hasException()) {
+        qWarning() << "JS scope has exception!";
         if (watcher.wasDeleted())
             scope.engine->catchException(); // ignore exception
         else

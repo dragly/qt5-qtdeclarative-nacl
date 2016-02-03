@@ -2121,7 +2121,6 @@ void Renderer::updateClip(const QSGClipNode *clipList, const Batch *batch)
         if (m_currentShader)
             setActiveShader(0, 0);
             
-      qDebug() << "Updateclip";  
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
         if (batch->isOpaque)
