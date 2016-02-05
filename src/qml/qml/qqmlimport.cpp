@@ -1603,7 +1603,7 @@ QQmlImportDatabase::QQmlImportDatabase(QQmlEngine *e)
     // Search order is applicationDirPath(), $QML2_IMPORT_PATH, QLibraryInfo::Qml2ImportsPath
 #if defined(Q_OS_NACL_EMSCRIPTEN)
     QString installImportsPath = "qt_qml";
-#elif defined(Q_OS_NACL_EMSCRIPTEN)
+#elif defined(Q_OS_NACL)
     QString installImportsPath = "qml";
 #else
     QString installImportsPath =  QLibraryInfo::location(QLibraryInfo::Qml2ImportsPath);
