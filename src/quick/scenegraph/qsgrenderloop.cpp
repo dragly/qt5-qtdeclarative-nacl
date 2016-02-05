@@ -183,7 +183,6 @@ QSGRenderLoop *QSGRenderLoop::instance()
 
             RenderLoopType loopType = BasicRenderLoop;
 
-#ifndef Q_OS_NACL_EMSCRIPTEN
 #ifdef Q_OS_WIN
             // With desktop OpenGL (opengl32.dll), use threaded. Otherwise (ANGLE) use windows.
             if (QOpenGLContext::openGLModuleType() == QOpenGLContext::LibGL
@@ -209,7 +208,6 @@ QSGRenderLoop *QSGRenderLoop::instance()
                 else if (loopName == QByteArrayLiteral("threaded"))
                     loopType = ThreadedRenderLoop;
             }
-#endif
 
             switch (loopType) {
             case ThreadedRenderLoop:

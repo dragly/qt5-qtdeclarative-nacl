@@ -35,8 +35,6 @@
 
 #include <QtCore/qdebug.h>
 #include <QtCore/qdir.h>
-#include <QtCore/qendian.h>
-#include <QtCore/qjsondocument.h>
 #include <QtQml/qqmlfile.h>
 #include <QtCore/qfileinfo.h>
 #include <QtCore/qpluginloader.h>
@@ -532,7 +530,7 @@ bool QQmlImports::resolveType(const QHashedStringRef &type,
     }
     if (type_return) {
         if (d->resolveType(type,vmaj,vmin,type_return, errors)) {
-            if (true || qmlImportTrace()) {
+            if (qmlImportTrace()) {
 #define RESOLVE_TYPE_DEBUG qDebug().nospace() << "QQmlImports(" << qPrintable(baseUrl().toString()) \
                                               << ')' << "::resolveType: " << type.toString() << " => "
 
@@ -839,27 +837,6 @@ QQmlImportNamespace *QQmlImportsPrivate::findQualifiedNamespace(const QHashedStr
 
 
 #ifndef QT_NO_LIBRARY
-
-
-#include <iostream>
-#include <iomanip>
-
-struct HexCharStruct
-{
-  unsigned char c;
-  HexCharStruct(unsigned char _c) : c(_c) { }
-};
-
-inline std::ostream& operator<<(std::ostream& o, const HexCharStruct& hs)
-{
-  return (o << std::hex << (int)hs.c);
-}
-
-inline HexCharStruct hex(unsigned char _c)
-{
-  return HexCharStruct(_c);
-}
-
 /*!
     Get all static plugins that are QML plugins and has a meta data URI that begins with \a uri.
     Note that if e.g uri == "a", and different plugins have meta data "a", "a.2.1", "a.b.c", all
@@ -883,11 +860,6 @@ bool QQmlImportsPrivate::populatePluginPairVector(QVector<StaticPluginPair> &res
         if (QQmlExtensionPlugin *instance = qobject_cast<QQmlExtensionPlugin *>(plugin.instance())) {
             const QJsonArray metaTagsUriList = plugin.metaData().value(QStringLiteral("uri")).toArray();
             if (metaTagsUriList.isEmpty()) {
-#ifdef Q_OS_NACL_EMSCRIPTEN
-      qWarning() << QQmlImportDatabase::tr("static plugin for module \"%1\" with name \"%2\" has no metadata URI")
-                    .arg(uri).arg(QString::fromUtf8(instance->metaObject()->className()));
-      qWarning() << "Metadata was" << plugin.metaData();
-#else
                 if (errors) {
                     QQmlError error;
                     error.setDescription(QQmlImportDatabase::tr("static plugin for module \"%1\" with name \"%2\" has no metadata URI")
@@ -896,7 +868,6 @@ bool QQmlImportsPrivate::populatePluginPairVector(QVector<StaticPluginPair> &res
                     errors->prepend(error);
                 }
                 return false;
-#endif
             }
             // A plugin can be set up to handle multiple URIs, so go through the list:
             foreach (const QJsonValue &metaTagUri, metaTagsUriList) {
@@ -926,7 +897,7 @@ bool QQmlImportsPrivate::importExtension(const QString &qmldirFilePath,
 #if !defined(QT_NO_LIBRARY)
     Q_ASSERT(qmldir);
 
-    if (true || qmlImportTrace())
+    if (qmlImportTrace())
         qDebug().nospace() << "QQmlImports(" << qPrintable(base) << ")::importExtension: "
                            << "loaded " << qmldirFilePath;
 
@@ -1496,7 +1467,7 @@ bool QQmlImports::addImplicitImport(QQmlImportDatabase *importDb, QList<QQmlErro
 {
     Q_ASSERT(errors);
 
-    if (true || qmlImportTrace())
+    if (qmlImportTrace())
         qDebug().nospace() << "QQmlImports(" << qPrintable(baseUrl().toString())
                            << ")::addImplicitImport";
 
@@ -1532,7 +1503,7 @@ bool QQmlImports::addFileImport(QQmlImportDatabase *importDb,
     Q_ASSERT(importDb);
     Q_ASSERT(errors);
 
-    if (true || qmlImportTrace())
+    if (qmlImportTrace())
         qDebug().nospace() << "QQmlImports(" << qPrintable(baseUrl().toString()) << ')' << "::addFileImport: "
                            << uri << ' ' << vmaj << '.' << vmin << " as " << prefix;
 
@@ -1546,7 +1517,7 @@ bool QQmlImports::addLibraryImport(QQmlImportDatabase *importDb,
     Q_ASSERT(importDb);
     Q_ASSERT(errors);
 
-    if (true || qmlImportTrace())
+    if (qmlImportTrace())
         qDebug().nospace() << "QQmlImports(" << qPrintable(baseUrl().toString()) << ')' << "::addLibraryImport: "
                            << uri << ' ' << vmaj << '.' << vmin << " as " << prefix;
 
@@ -1560,7 +1531,7 @@ bool QQmlImports::updateQmldirContent(QQmlImportDatabase *importDb,
     Q_ASSERT(importDb);
     Q_ASSERT(errors);
 
-    if (true || qmlImportTrace())
+    if (qmlImportTrace())
         qDebug().nospace() << "QQmlImports(" << qPrintable(baseUrl().toString()) << ')' << "::updateQmldirContent: "
                            << uri << " to " << qmldirUrl << " as " << prefix;
 
@@ -1684,7 +1655,7 @@ QString QQmlImportDatabase::resolvePlugin(QQmlTypeLoader *typeLoader,
         }
     }
 
-    if (true || qmlImportTrace())
+    if (qmlImportTrace())
         qDebug() << "QQmlImportDatabase::resolvePlugin: Could not resolve plugin" << baseName
                  << "in" << qmldirPath;
 
@@ -1750,7 +1721,7 @@ QStringList QQmlImportDatabase::pluginPathList() const
 */
 void QQmlImportDatabase::setPluginPathList(const QStringList &paths)
 {
-    if (true || qmlImportTrace())
+    if (qmlImportTrace())
         qDebug().nospace() << "QQmlImportDatabase::setPluginPathList: " << paths;
 
     filePluginPath = paths;
@@ -1761,7 +1732,7 @@ void QQmlImportDatabase::setPluginPathList(const QStringList &paths)
 */
 void QQmlImportDatabase::addPluginPath(const QString& path)
 {
-    if (true || qmlImportTrace())
+    if (qmlImportTrace())
         qDebug().nospace() << "QQmlImportDatabase::addPluginPath: " << path;
 
     QUrl url = QUrl(path);
@@ -1779,7 +1750,7 @@ void QQmlImportDatabase::addPluginPath(const QString& path)
 */
 void QQmlImportDatabase::addImportPath(const QString& path)
 {
-    if (true || qmlImportTrace())
+    if (qmlImportTrace())
         qDebug().nospace() << "QQmlImportDatabase::addImportPath: " << path;
 
     if (path.isEmpty())
@@ -1832,7 +1803,7 @@ QStringList QQmlImportDatabase::importPathList(PathType type) const
 */
 void QQmlImportDatabase::setImportPathList(const QStringList &paths)
 {
-    if (true || qmlImportTrace())
+    if (qmlImportTrace())
         qDebug().nospace() << "QQmlImportDatabase::setImportPathList: " << paths;
 
     fileImportPath = paths;
@@ -1847,7 +1818,7 @@ void QQmlImportDatabase::setImportPathList(const QStringList &paths)
 bool QQmlImportDatabase::registerPluginTypes(QObject *instance, const QString &basePath,
                                       const QString &uri, const QString &typeNamespace, int vmaj, QList<QQmlError> *errors)
 {
-    if (true || qmlImportTrace())
+    if (qmlImportTrace())
         qDebug().nospace() << "QQmlImportDatabase::registerPluginTypes: " << uri << " from " << basePath;
 
     QQmlTypesExtensionInterface *iface = qobject_cast<QQmlTypesExtensionInterface *>(instance);
