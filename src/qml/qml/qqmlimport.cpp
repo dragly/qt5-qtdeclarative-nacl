@@ -960,22 +960,15 @@ bool QQmlImportsPrivate::importExtension(const QString &qmldirFilePath,
             // has several plugins, they must all have the same version. Start by populating pluginPairs
             // with relevant plugins to cut the list short early on:
             QVector<StaticPluginPair> pluginPairs;
-            qDebug() << "Look for statics";
             if (!populatePluginPairVector(pluginPairs, uri, qmldirFilePath, errors))
                 return false;
                 
-            qDebug() << "Looking for static plugins";
-
             const QString basePath = QFileInfo(qmldirPath).absoluteFilePath();
             for (int version = QQmlImports::FullyVersioned; version <= QQmlImports::Unversioned && staticPluginsFound == 0; ++version) {
-                qDebug() << "Version:" << version;
                 QString versionUri = uri + QQmlImports::versionString(vmaj, vmin, static_cast<QQmlImports::ImportVersion>(version));
-                qDebug() << "VersionURI:" << versionUri;
 
                 foreach (const StaticPluginPair &pair, pluginPairs) {
-                    qDebug() << "Static plugin pair";
                     foreach (const QJsonValue &metaTagUri, pair.second) {
-                        qDebug() << "URI" << metaTagUri;
                         if (versionUri == metaTagUri.toString()) {
                             staticPluginsFound++;
                             QObject *instance = pair.first.instance();
@@ -1954,7 +1947,6 @@ bool QQmlImportDatabase::importStaticPlugin(QObject *instance, const QString &ba
 bool QQmlImportDatabase::importDynamicPlugin(const QString &filePath, const QString &uri,
                                              const QString &typeNamespace, int vmaj, QList<QQmlError> *errors)
 {
-    qDebug() << "Importing " << filePath << uri << typeNamespace << vmaj;
 #ifndef QT_NO_LIBRARY
     QFileInfo fileInfo(filePath);
     const QString absoluteFilePath = fileInfo.absoluteFilePath();
@@ -1982,11 +1974,9 @@ bool QQmlImportDatabase::importDynamicPlugin(const QString &filePath, const QStr
 
         QPluginLoader* loader = 0;
         if (!typesRegistered) {
-            qDebug() << "Loader is loading!";
             loader = new QPluginLoader(absoluteFilePath);
 
             if (!loader->load()) {
-                qDebug() << "Could not load...";
                 if (errors) {
                     QQmlError error;
                     error.setDescription(loader->errorString());
