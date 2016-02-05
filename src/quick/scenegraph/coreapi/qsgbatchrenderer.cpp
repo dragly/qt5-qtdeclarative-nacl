@@ -2243,6 +2243,7 @@ void Renderer::renderMergedBatch(const Batch *batch)
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuf->id);
     }
 
+
     QSGMaterial *material = gn->activeMaterial();
     ShaderManager::Shader *sms = m_useDepthBuffer ? m_shaderManager->prepareMaterial(material) : m_shaderManager->prepareMaterialNoRewrite(material);
     if (!sms)
@@ -2323,7 +2324,7 @@ void Renderer::renderUnmergedBatch(const Batch *batch)
 
     m_current_projection_matrix = projectionMatrix();
     updateClip(gn->clipList(), batch);
-    
+
     glBindBuffer(GL_ARRAY_BUFFER, batch->vbo.id);
     char *indexBase = 0;
 #ifdef QSG_SEPARATE_INDEX_BUFFER
