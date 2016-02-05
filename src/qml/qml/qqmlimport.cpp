@@ -962,7 +962,7 @@ bool QQmlImportsPrivate::importExtension(const QString &qmldirFilePath,
             QVector<StaticPluginPair> pluginPairs;
             if (!populatePluginPairVector(pluginPairs, uri, qmldirFilePath, errors))
                 return false;
-                
+
             const QString basePath = QFileInfo(qmldirPath).absoluteFilePath();
             for (int version = QQmlImports::FullyVersioned; version <= QQmlImports::Unversioned && staticPluginsFound == 0; ++version) {
                 QString versionUri = uri + QQmlImports::versionString(vmaj, vmin, static_cast<QQmlImports::ImportVersion>(version));
